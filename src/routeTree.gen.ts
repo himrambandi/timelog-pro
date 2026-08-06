@@ -10,33 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MyEntriesRouteImport } from './routes/my-entries'
+import { Route as TimeEntryRouteImport } from './routes/time-entry'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminEmployeeEmployeeIdRouteImport } from './routes/admin.employee.$employeeId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyEntriesRoute = MyEntriesRouteImport.update({
+  id: '/my-entries',
+  path: '/my-entries',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TimeEntryRoute = TimeEntryRouteImport.update({
+  id: '/time-entry',
+  path: '/time-entry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEmployeeEmployeeIdRoute = AdminEmployeeEmployeeIdRouteImport.update({
+  id: '/admin/employee/$employeeId',
+  path: '/admin/employee/$employeeId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/my-entries': typeof MyEntriesRoute
+  '/time-entry': typeof TimeEntryRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/employee/$employeeId': typeof AdminEmployeeEmployeeIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/my-entries': typeof MyEntriesRoute
+  '/time-entry': typeof TimeEntryRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/employee/$employeeId': typeof AdminEmployeeEmployeeIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/my-entries': typeof MyEntriesRoute
+  '/time-entry': typeof TimeEntryRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/employee/$employeeId': typeof AdminEmployeeEmployeeIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/my-entries'
+    | '/time-entry'
+    | '/admin/'
+    | '/admin/employee/$employeeId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/my-entries'
+    | '/time-entry'
+    | '/admin'
+    | '/admin/employee/$employeeId'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/my-entries'
+    | '/time-entry'
+    | '/admin/'
+    | '/admin/employee/$employeeId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRoute
+  LoginRoute: typeof LoginRoute
+  MyEntriesRoute: typeof MyEntriesRoute
+  TimeEntryRoute: typeof TimeEntryRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminEmployeeEmployeeIdRoute: typeof AdminEmployeeEmployeeIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +130,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-entries': {
+      id: '/my-entries'
+      path: '/my-entries'
+      fullPath: '/my-entries'
+      preLoaderRoute: typeof MyEntriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/time-entry': {
+      id: '/time-entry'
+      path: '/time-entry'
+      fullPath: '/time-entry'
+      preLoaderRoute: typeof TimeEntryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/employee/$employeeId': {
+      id: '/admin/employee/$employeeId'
+      path: '/admin/employee/$employeeId'
+      fullPath: '/admin/employee/$employeeId'
+      preLoaderRoute: typeof AdminEmployeeEmployeeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRoute,
+  LoginRoute: LoginRoute,
+  MyEntriesRoute: MyEntriesRoute,
+  TimeEntryRoute: TimeEntryRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminEmployeeEmployeeIdRoute: AdminEmployeeEmployeeIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
