@@ -3,152 +3,77 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import type { TimeEntry } from "./types";
+import { createClient } from "@supabase/supabase-js";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY;
-const GITHUB_BRANCH = process.env.GITHUB_BRANCH ?? "main";
-const GITHUB_ENTRIES_PATH = process.env.GITHUB_ENTRIES_PATH ?? "time-entries.json";
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_TABLE = process.env.SUPABASE_TIME_ENTRIES_TABLE ?? "time_entries";
 
-function getGithubRepo() {
-  if (!GITHUB_REPOSITORY) {
+function getSupabaseClient() {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error(
-      "GITHUB_REPOSITORY is not configured. Set it as owner/repo in the server environment.",
+      "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in the environment.",
     );
   }
-
-  const [owner, repo] = GITHUB_REPOSITORY.split("/");
-  if (!owner || !repo) {
-    throw new Error("GITHUB_REPOSITORY must be set in owner/repo format.");
-  }
-
-  return { owner, repo };
-}
-
-function githubHeaders(): Headers {
-  const headers = new Headers({ "accept": "application/vnd.github+json" });
-  if (GITHUB_TOKEN) {
-    headers.set("authorization", `Bearer ${GITHUB_TOKEN}`);
-  }
-  return headers;
-}
-
-async function githubApi(url: string, init: RequestInit = {}) {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      ...Object.fromEntries(githubHeaders().entries()),
-      ...(init.headers ?? {}),
-    },
+  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
   });
-  const text = await response.text();
-  let json: unknown = undefined;
-  try {
-    json = text ? JSON.parse(text) : undefined;
-  } catch {
-    json = text;
-  }
-  return { response, json, text };
 }
 
-async function fetchTimeEntriesFile() {
-  const { owner, repo } = getGithubRepo();
-  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(
-    GITHUB_ENTRIES_PATH,
-  )}?ref=${encodeURIComponent(GITHUB_BRANCH)}`;
-  const { response, json } = await githubApi(url);
-
-  if (response.status === 404) {
-    return { content: "[]", sha: undefined };
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      `GitHub request failed ${response.status}: ${JSON.stringify(json)}`,
-    );
-  }
-
-  if (!json || typeof json !== "object" || !("content" in json) || !("sha" in json)) {
-    throw new Error("Unexpected GitHub response while reading time entries file.");
-  }
-
-  const content = Buffer.from((json as { content: string }).content, "base64").toString(
-    "utf8",
-  );
-  return { content, sha: (json as { sha: string }).sha };
-}
-
-async function writeTimeEntriesFile(entries: TimeEntry[], sha?: string) {
-  const { owner, repo } = getGithubRepo();
-  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(
-    GITHUB_ENTRIES_PATH,
-  )}`;
-  const body = {
-    message: `Update shared time entries ${new Date().toISOString()}`,
-    content: Buffer.from(JSON.stringify(entries, null, 2), "utf8").toString("base64"),
-    branch: GITHUB_BRANCH,
-    sha,
-  } as Record<string, unknown>;
-
-  const { response, json } = await githubApi(url, {
-    method: "PUT",
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `GitHub write failed ${response.status}: ${JSON.stringify(json)}`,
-    );
-  }
-
-  return json;
+function mapRowToEntry(row: Record<string, unknown>): TimeEntry {
+  return {
+    id: String(row.id),
+    employeeId: String(row.employee_id),
+    siteId: String(row.site_id),
+    date: String(row.date),
+    durationMinutes: Number(row.duration_minutes),
+    workDescription: String(row.work_description),
+    note: row.note == null ? undefined : String(row.note),
+    billable: Boolean(row.billable),
+    createdAt: String(row.created_at),
+    updatedAt: row.updated_at == null ? undefined : String(row.updated_at),
+  };
 }
 
 async function getSharedEntries(): Promise<TimeEntry[]> {
-  const { content } = await fetchTimeEntriesFile();
-  const parsed = JSON.parse(content);
-  return Array.isArray(parsed) ? (parsed as TimeEntry[]) : [];
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from(SUPABASE_TABLE)
+    .select(
+      `id, employee_id, site_id, date, duration_minutes, work_description, note, billable, created_at, updated_at`,
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Supabase fetch error: ${error.message}`);
+  }
+
+  return Array.isArray(data) ? data.map((row) => mapRowToEntry(row as Record<string, unknown>)) : [];
 }
 
 async function saveSharedEntry(entry: TimeEntry): Promise<TimeEntry> {
-  const { content, sha } = await fetchTimeEntriesFile();
-  const existingEntries = Array.isArray(JSON.parse(content))
-    ? (JSON.parse(content) as TimeEntry[])
-    : ([] as TimeEntry[]);
+  const supabase = getSupabaseClient();
+  const row = {
+    id: entry.id,
+    employee_id: entry.employeeId,
+    site_id: entry.siteId,
+    date: entry.date,
+    duration_minutes: entry.durationMinutes,
+    work_description: entry.workDescription,
+    note: entry.note ?? null,
+    billable: entry.billable,
+    created_at: entry.createdAt,
+    updated_at: entry.updatedAt ?? entry.createdAt,
+  };
 
-  const nextEntries = [...existingEntries];
-  const index = nextEntries.findIndex((item) => item.id === entry.id);
-
-  if (index >= 0) {
-    nextEntries[index] = { ...nextEntries[index], ...entry };
-  } else {
-    nextEntries.push(entry);
+  const { error } = await supabase.from(SUPABASE_TABLE).upsert(row, { onConflict: "id" });
+  if (error) {
+    throw new Error(`Supabase save error: ${error.message}`);
   }
-
-  try {
-    await writeTimeEntriesFile(nextEntries, sha);
-  } catch (error) {
-    if (error instanceof Error && /sha|conflict/i.test(error.message)) {
-      const retry = await fetchTimeEntriesFile();
-      const baseEntries = Array.isArray(JSON.parse(retry.content))
-        ? (JSON.parse(retry.content) as TimeEntry[])
-        : ([] as TimeEntry[]);
-      const merged = [...baseEntries];
-      const mergedIndex = merged.findIndex((item) => item.id === entry.id);
-      if (mergedIndex >= 0) {
-        merged[mergedIndex] = { ...merged[mergedIndex], ...entry };
-      } else {
-        merged.push(entry);
-      }
-      await writeTimeEntriesFile(merged, retry.sha);
-    } else {
-      throw error;
-    }
-  }
-
   return entry;
 }
 
