@@ -12,7 +12,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ username?: string; password?: string; form?: string }>({});
+  type LoginErrors = { username?: string | undefined; password?: string | undefined; form?: string | undefined };
+  const [errors, setErrors] = useState<LoginErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export function LoginPage() {
     event.preventDefault();
     if (isSubmitting) return;
 
-    const nextErrors: typeof errors = {};
+    const nextErrors: LoginErrors = {};
     if (!username.trim()) nextErrors.username = "Username is required.";
     if (!password) nextErrors.password = "Password is required.";
     setErrors(nextErrors);
