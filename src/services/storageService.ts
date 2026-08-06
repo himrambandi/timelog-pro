@@ -73,6 +73,58 @@ function seedEntries(): TimeEntry[] {
   }));
 }
 
+async function fetchEntriesFromServer(): Promise<TimeEntry[]> {
+  try {
+    const response = await fetch("/api/time-entries", { method: "GET" });
+    if (!response.ok) {
+      return [];
+    }
+    return (await response.json()) as TimeEntry[];
+  } catch {
+    return [];
+  }
+}
+
+async function saveEntryToServer(entry: TimeEntry): Promise<TimeEntry> {
+  const response = await fetch("/api/time-entries", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(entry),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to save entry to remote repository.");
+  }
+
+  const result = await response.json();
+  return (result?.entry as TimeEntry) ?? entry;
+}
+
+export const serverRepository: TimeEntryRepository = {
+  async listEntries() {
+    return fetchEntriesFromServer();
+  },
+  async saveEntry(entry) {
+    return saveEntryToServer(entry);
+  },
+  async listPending() {
+    return read<PendingTimeEntry>(PENDING_KEY);
+  },
+  async savePending(entry) {
+    const pending = read<PendingTimeEntry>(PENDING_KEY);
+    const record: PendingTimeEntry = { ...entry, pending: true };
+    pending.push(record);
+    write(PENDING_KEY, pending);
+    return record;
+  },
+  async removePending(id) {
+    write(
+      PENDING_KEY,
+      read<PendingTimeEntry>(PENDING_KEY).filter((entry) => entry.id !== id),
+    );
+  },
+};
+
 export const localStorageRepository: TimeEntryRepository = {
   async listEntries() {
     if (isBrowser() && !window.localStorage.getItem(SEEDED_KEY)) {
@@ -108,4 +160,4 @@ export const localStorageRepository: TimeEntryRepository = {
   },
 };
 
-export const storageService = localStorageRepository;
+export const storageService = serverRepository;
