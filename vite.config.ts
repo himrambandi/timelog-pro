@@ -19,7 +19,11 @@ export default defineConfig({
         registerType: "autoUpdate",
         injectRegister: null,
         filename: "sw.js",
+        // TanStack Start emits the browser bundle to dist/client; the service
+        // worker and its precache manifest must land there to be served.
+        outDir: "dist/client",
         devOptions: { enabled: false },
+
         manifest: {
           name: "Time & Activity Tracker",
           short_name: "Time Tracker",
