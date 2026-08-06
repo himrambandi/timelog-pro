@@ -31,10 +31,10 @@ export interface TimeEntry {
   date: string;
   durationMinutes: number;
   workDescription: string;
-  note?: string;
+  note?: string | undefined;
   billable: boolean;
   createdAt: string;
-  updatedAt?: string;
+  updatedAt?: string | undefined;
 }
 
 /** A time entry created while offline and awaiting synchronization. */
