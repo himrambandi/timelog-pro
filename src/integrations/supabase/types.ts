@@ -14,7 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      time_entries: {
+        Row: {
+          billable: boolean
+          created_at: string
+          duration_minutes: number
+          employee_id: string
+          entry_date: string
+          id: string
+          note: string | null
+          site_id: string
+          updated_at: string | null
+          work_description: string
+        }
+        Insert: {
+          billable?: boolean
+          created_at?: string
+          duration_minutes: number
+          employee_id: string
+          entry_date: string
+          id: string
+          note?: string | null
+          site_id: string
+          updated_at?: string | null
+          work_description: string
+        }
+        Update: {
+          billable?: boolean
+          created_at?: string
+          duration_minutes?: number
+          employee_id?: string
+          entry_date?: string
+          id?: string
+          note?: string | null
+          site_id?: string
+          updated_at?: string | null
+          work_description?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
