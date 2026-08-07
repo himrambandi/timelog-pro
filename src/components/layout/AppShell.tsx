@@ -11,14 +11,15 @@ interface NavItem {
   to: string;
   label: string;
   icon: typeof Clock;
-  adminOnly?: boolean;
+  /** Roles allowed to see this item. Admins only ever see the admin portal. */
+  roles: Array<"employee" | "admin">;
 }
 
 const NAV: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/time-entry", label: "Log Time", icon: PlusCircle },
-  { to: "/my-entries", label: "My Entries", icon: ListChecks },
-  { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["employee"] },
+  { to: "/time-entry", label: "Log Time", icon: PlusCircle, roles: ["employee"] },
+  { to: "/my-entries", label: "My Entries", icon: ListChecks, roles: ["employee"] },
+  { to: "/admin", label: "Admin", icon: ShieldCheck, roles: ["admin"] },
 ];
 
 export function AppShell({
@@ -32,12 +33,13 @@ export function AppShell({
   actions?: ReactNode;
   children: ReactNode;
 }) {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, logout } = useAuth();
   const { isOnline, pendingCount } = useOnlineStatus();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
-  const items = NAV.filter((item) => !item.adminOnly || isAdmin);
+  const items = NAV.filter((item) => (user ? item.roles.includes(user.role) : false));
+
   const displayName = user?.employeeId
     ? employeeService.getEmployeeName(user.employeeId)
     : (user?.username ?? "");

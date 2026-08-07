@@ -1,4 +1,5 @@
-import { storageService, type TimeEntryRepository } from "./storageService";
+import { cloudRepository } from "./cloudRepository";
+import { type TimeEntryRepository } from "./storageService";
 import type {
   EntryFilters,
   EntrySummary,
@@ -7,7 +8,8 @@ import type {
   TimeEntryDraft,
 } from "@/types";
 
-let repository: TimeEntryRepository = storageService;
+let repository: TimeEntryRepository = cloudRepository;
+
 
 /** Swap the underlying data store (Supabase, serverless API, ...) without UI changes. */
 export function setTimeEntryRepository(next: TimeEntryRepository): void {

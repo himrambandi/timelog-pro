@@ -23,6 +23,11 @@ export function RequireAuth({
 
   if (!user) return <Navigate to="/login" replace />;
 
+  // Admins only use the admin portal — employee screens redirect there.
+  if (!adminOnly && isAdmin) return <Navigate to="/admin" replace />;
+
+
+
   if (adminOnly && !isAdmin) {
     return (
       <div className="grid min-h-screen place-items-center bg-background px-4">
