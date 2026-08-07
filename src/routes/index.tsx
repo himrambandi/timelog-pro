@@ -26,5 +26,5 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: () => <Navigate to="/dashboard" replace />,
+  component: IndexRedirect,
 });
