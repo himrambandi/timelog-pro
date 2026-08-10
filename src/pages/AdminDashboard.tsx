@@ -304,6 +304,9 @@ export function AdminDashboardPage() {
           <EntriesTable entries={filtered} />
         )}
       </section>
+      </>
+      )}
     </AppShell>
+
   );
 }
