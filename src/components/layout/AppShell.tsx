@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { employeeService } from "@/services/employeeService";
+import { useDirectoryVersion } from "@/services/directoryCache";
 import { cn } from "@/lib/utils";
 
 interface NavItem {

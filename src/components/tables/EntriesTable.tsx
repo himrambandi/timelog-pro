@@ -2,6 +2,7 @@ import type { PendingTimeEntry, TimeEntry } from "@/types";
 import { BillableBadge, PendingBadge } from "@/components/common/States";
 import { employeeService } from "@/services/employeeService";
 import { siteService } from "@/services/siteService";
+import { useDirectoryVersion } from "@/services/directoryCache";
 import { formatDisplayDate, formatTimestamp } from "@/utils/dateUtils";
 import { minutesToHHMM } from "@/utils/timeUtils";
 

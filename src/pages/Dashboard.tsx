@@ -8,6 +8,7 @@ import { EntriesTable } from "@/components/tables/EntriesTable";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { employeeService } from "@/services/employeeService";
+import { useDirectoryVersion } from "@/services/directoryCache";
 import { summarize, timeEntryService } from "@/services/timeEntryService";
 import type { TimeEntry } from "@/types";
 import { startOfMonth, startOfWeek, today } from "@/utils/dateUtils";
@@ -15,6 +16,7 @@ import { minutesToHHMM } from "@/utils/timeUtils";
 
 export function DashboardPage() {
   const { user, isAdmin } = useAuth();
+  useDirectoryVersion();
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
