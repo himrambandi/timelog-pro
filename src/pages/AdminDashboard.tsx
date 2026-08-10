@@ -120,17 +120,42 @@ export function AdminDashboardPage() {
       title="Admin portal"
       description="Employee time tracking and billable reporting"
       actions={
-        <Button size="sm" variant="outline" onClick={handleExport} disabled={isExporting || isLoading}>
-          {isExporting ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <Download className="mr-2 size-4" />
-          )}
-          Export
-        </Button>
+        tab === "report" ? (
+          <Button size="sm" variant="outline" onClick={handleExport} disabled={isExporting || isLoading}>
+            {isExporting ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 size-4" />
+            )}
+            Export
+          </Button>
+        ) : null
       }
     >
+      <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-1">
+        {TABS.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setTab(value)}
+            className={`rounded-t-lg px-4 py-2 text-sm font-medium transition ${
+              tab === value
+                ? "border-b-2 border-primary text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "employees" ? <EmployeeManager onChanged={() => void loadData()} /> : null}
+      {tab === "sites" ? <SiteManager onChanged={() => void loadData()} /> : null}
+
+      {tab !== "report" ? null : (
+      <>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+
         <StatCard label="Total employees" value={employees.length} icon={Users} hint={`${employeeCount} with entries`} />
         <StatCard label="Total hours" value={minutesToHHMM(summary.totalMinutes)} tone="primary" />
         <StatCard label="Billable hours" value={minutesToHHMM(summary.billableMinutes)} tone="billable" />
