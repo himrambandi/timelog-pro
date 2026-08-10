@@ -1,16 +1,35 @@
-import employees from "@/config/employees.json";
+import {
+  ensureDirectory,
+  getCachedEmployees,
+  lookupEmployeeName,
+  reloadDirectory,
+} from "./directoryCache";
+import {
+  createEmployee as createEmployeeFn,
+  setEmployeeActive as setEmployeeActiveFn,
+} from "@/lib/directory.functions";
 import type { Employee } from "@/types";
-
-const all = employees as Employee[];
 
 export const employeeService = {
   async getEmployees(): Promise<Employee[]> {
-    return all;
+    await ensureDirectory();
+    return getCachedEmployees();
   },
   async getActiveEmployees(): Promise<Employee[]> {
-    return all.filter((employee) => employee.active);
+    await ensureDirectory();
+    return getCachedEmployees().filter((employee) => employee.active);
   },
+  /** Resolves a cached name; falls back to the id until the directory has loaded. */
   getEmployeeName(id: string): string {
-    return all.find((employee) => employee.id === id)?.name ?? id;
+    void ensureDirectory();
+    return lookupEmployeeName(id);
+  },
+  async addEmployee(name: string): Promise<void> {
+    await createEmployeeFn({ data: { name } });
+    await reloadDirectory();
+  },
+  async setActive(id: string, active: boolean): Promise<void> {
+    await setEmployeeActiveFn({ data: { id, active } });
+    await reloadDirectory();
   },
 };
