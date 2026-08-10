@@ -45,7 +45,16 @@ function toEntryFilters(draft: DraftFilters): EntryFilters {
   return filters;
 }
 
+type AdminTab = "report" | "employees" | "sites";
+
+const TABS: ReadonlyArray<readonly [AdminTab, string]> = [
+  ["report", "Tracking report"],
+  ["employees", "Employees"],
+  ["sites", "Sites"],
+];
+
 export function AdminDashboardPage() {
+  const [tab, setTab] = useState<AdminTab>("report");
   const [allEntries, setAllEntries] = useState<TimeEntry[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
@@ -53,6 +62,7 @@ export function AdminDashboardPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [draft, setDraft] = useState<DraftFilters>(EMPTY_FILTERS);
   const [applied, setApplied] = useState<DraftFilters>(EMPTY_FILTERS);
+
 
   useEffect(() => {
     let cancelled = false;
