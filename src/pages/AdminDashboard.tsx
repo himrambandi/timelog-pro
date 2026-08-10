@@ -64,25 +64,22 @@ export function AdminDashboardPage() {
   const [applied, setApplied] = useState<DraftFilters>(EMPTY_FILTERS);
 
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      setIsLoading(true);
-      const [entries, employeeList, siteList] = await Promise.all([
-        timeEntryService.getEntries(),
-        employeeService.getActiveEmployees(),
-        siteService.getSites(),
-      ]);
-      if (cancelled) return;
-      setAllEntries(entries);
-      setEmployees(employeeList);
-      setSites(siteList);
-      setIsLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
+  const loadData = useCallback(async () => {
+    const [entries, employeeList, siteList] = await Promise.all([
+      timeEntryService.getEntries(),
+      employeeService.getActiveEmployees(),
+      siteService.getSites(),
+    ]);
+    setAllEntries(entries);
+    setEmployees(employeeList);
+    setSites(siteList);
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
 
   const filters = useMemo(() => toEntryFilters(applied), [applied]);
 
