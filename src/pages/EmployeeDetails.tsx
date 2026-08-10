@@ -8,6 +8,7 @@ import { EntriesTable } from "@/components/tables/EntriesTable";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Button } from "@/components/ui/button";
 import { employeeService } from "@/services/employeeService";
+import { useDirectoryVersion } from "@/services/directoryCache";
 import { exportEntriesToExcel } from "@/services/excelService";
 import { summarize, timeEntryService } from "@/services/timeEntryService";
 import type { TimeEntry } from "@/types";
@@ -17,6 +18,7 @@ export function EmployeeDetailsPage({ employeeId }: { employeeId: string }) {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  useDirectoryVersion();
   const name = employeeService.getEmployeeName(employeeId);
 
   useEffect(() => {

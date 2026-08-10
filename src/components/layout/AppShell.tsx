@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { employeeService } from "@/services/employeeService";
+import { useDirectoryVersion } from "@/services/directoryCache";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -34,6 +35,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const { user, logout } = useAuth();
+  useDirectoryVersion();
   const { isOnline, pendingCount } = useOnlineStatus();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });

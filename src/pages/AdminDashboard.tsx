@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Download, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { EmptyState, LoadingState } from "@/components/common/States";
 import { EntriesTable } from "@/components/tables/EntriesTable";
+import { EmployeeManager } from "@/components/admin/EmployeeManager";
+import { SiteManager } from "@/components/admin/SiteManager";
 import { StatCard } from "@/components/dashboard/StatCard";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,7 +48,16 @@ function toEntryFilters(draft: DraftFilters): EntryFilters {
   return filters;
 }
 
+type AdminTab = "report" | "employees" | "sites";
+
+const TABS: ReadonlyArray<readonly [AdminTab, string]> = [
+  ["report", "Tracking report"],
+  ["employees", "Employees"],
+  ["sites", "Sites"],
+];
+
 export function AdminDashboardPage() {
+  const [tab, setTab] = useState<AdminTab>("report");
   const [allEntries, setAllEntries] = useState<TimeEntry[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
@@ -54,25 +66,23 @@ export function AdminDashboardPage() {
   const [draft, setDraft] = useState<DraftFilters>(EMPTY_FILTERS);
   const [applied, setApplied] = useState<DraftFilters>(EMPTY_FILTERS);
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      setIsLoading(true);
-      const [entries, employeeList, siteList] = await Promise.all([
-        timeEntryService.getEntries(),
-        employeeService.getActiveEmployees(),
-        siteService.getSites(),
-      ]);
-      if (cancelled) return;
-      setAllEntries(entries);
-      setEmployees(employeeList);
-      setSites(siteList);
-      setIsLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
+
+  const loadData = useCallback(async () => {
+    const [entries, employeeList, siteList] = await Promise.all([
+      timeEntryService.getEntries(),
+      employeeService.getActiveEmployees(),
+      siteService.getSites(),
+    ]);
+    setAllEntries(entries);
+    setEmployees(employeeList);
+    setSites(siteList);
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
 
   const filters = useMemo(() => toEntryFilters(applied), [applied]);
 
@@ -110,17 +120,42 @@ export function AdminDashboardPage() {
       title="Admin portal"
       description="Employee time tracking and billable reporting"
       actions={
-        <Button size="sm" variant="outline" onClick={handleExport} disabled={isExporting || isLoading}>
-          {isExporting ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <Download className="mr-2 size-4" />
-          )}
-          Export
-        </Button>
+        tab === "report" ? (
+          <Button size="sm" variant="outline" onClick={handleExport} disabled={isExporting || isLoading}>
+            {isExporting ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 size-4" />
+            )}
+            Export
+          </Button>
+        ) : null
       }
     >
+      <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-1">
+        {TABS.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setTab(value)}
+            className={`rounded-t-lg px-4 py-2 text-sm font-medium transition ${
+              tab === value
+                ? "border-b-2 border-primary text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "employees" ? <EmployeeManager onChanged={() => void loadData()} /> : null}
+      {tab === "sites" ? <SiteManager onChanged={() => void loadData()} /> : null}
+
+      {tab !== "report" ? null : (
+      <>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+
         <StatCard label="Total employees" value={employees.length} icon={Users} hint={`${employeeCount} with entries`} />
         <StatCard label="Total hours" value={minutesToHHMM(summary.totalMinutes)} tone="primary" />
         <StatCard label="Billable hours" value={minutesToHHMM(summary.billableMinutes)} tone="billable" />
@@ -269,6 +304,9 @@ export function AdminDashboardPage() {
           <EntriesTable entries={filtered} />
         )}
       </section>
+      </>
+      )}
     </AppShell>
+
   );
 }
