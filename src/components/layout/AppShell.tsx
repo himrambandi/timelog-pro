@@ -35,6 +35,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const { user, logout } = useAuth();
+  useDirectoryVersion();
   const { isOnline, pendingCount } = useOnlineStatus();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });

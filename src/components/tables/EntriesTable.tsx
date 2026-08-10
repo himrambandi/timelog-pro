@@ -19,6 +19,7 @@ export function EntriesTable({
   showEmployee?: boolean;
   showCreatedAt?: boolean;
 }) {
+  useDirectoryVersion();
   return (
     <>
       {/* Desktop table */}
